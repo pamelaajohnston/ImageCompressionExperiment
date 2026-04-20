@@ -72,10 +72,11 @@ if __name__ == "__main__":
     makeFreshDir(uncompTrainDir)
     makeFreshDir(comp1TestDir)
     makeFreshDir(comp1TrainDir)
-    makeFreshDir(comp2aTestDir)
-    makeFreshDir(comp2aTrainDir)
-    makeFreshDir(comp2bTestDir)
-    makeFreshDir(comp2bTrainDir)
+    if doSecondCompression:
+        makeFreshDir(comp2aTestDir)
+        makeFreshDir(comp2aTrainDir)
+        makeFreshDir(comp2bTestDir)
+        makeFreshDir(comp2bTrainDir)
 
     for imageName in imageNames:
         #test or train

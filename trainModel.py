@@ -1,6 +1,10 @@
 import numpy as np
 import tensorflow as tf
-from keras.preprocessing.image import ImageDataGenerator
+
+from tensorflow.keras.utils import image_dataset_from_directory
+#from tensorflow.python.keras.preprocessing.image import ImageDataGenerator
+
+
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D
 from keras.layers import Activation, Dropout, Flatten, Dense
@@ -343,9 +347,10 @@ if __name__ == "__main__":
         config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
         #tf.keras.backend.set_session(tf.Session(config=config))
 
-   # datadir = "UCIDsinglecompression32x32patchesDataSet"
+    datadir = "UCIDsinglecompression32x32patchesDataSet"
    # datadir = "UCIDcompression32x32patchesDataSet"
-    datadir = "UCIDcompression3class32x32patchesDataSet"
+   # datadir = "UCIDcompression3class32x32patchesDataSet"
+   # datadir = "UCID1338_Compressed_patches"
     traindir = '{}/train'.format(datadir)
     fileList = c.createFileList(traindir)
     trainSamples = len(fileList)
@@ -362,25 +367,72 @@ if __name__ == "__main__":
         print("channels last")
         input_shape = (img_w, img_h, 3)
 
-    datagen = decideDataGeneration(2)
-    datagen_test = decideDataGeneration(2)
+   # datagen = decideDataGeneration(2)
+   # datagen_test = decideDataGeneration(2)
 
-    train_it = datagen.flow_from_directory('{}/train'.format(datadir),
-                                           #color_mode='grayscale',
-                                           color_mode='rgb',
-                                           target_size=(img_w, img_h),
-                                           batch_size=batch_size,
-                                           class_mode="categorical",
-                                           shuffle=True)
 
-    test_it = datagen_test.flow_from_directory('{}/test'.format(datadir),
-                                           color_mode='rgb',
-                                           target_size=(img_w, img_h),
-                                           batch_size=batch_size,
-                                           class_mode="categorical",
-                                           shuffle=False)
 
-    num_classes = len(list(train_it.class_indices.values()))
+    #train_it = datagen.flow_from_directory('{}/train'.format(datadir),
+    #                                       color_mode='rgb',
+    #                                       #color_mode='grayscale',
+    #                                       target_size=(img_w, img_h),
+    #                                       batch_size=batch_size,
+    #                                       class_mode="categorical",
+    #                                       shuffle=True)
+
+    #test_it = datagen_test.flow_from_directory('{}/test'.format(datadir),
+    #                                       color_mode='rgb',
+    #                                       target_size=(img_w, img_h),
+    #                                       batch_size=batch_size,
+    #                                       class_mode="categorical",
+    #                                       shuffle=False)
+
+    train_it = tf.keras.preprocessing.image_dataset_from_directory(
+        '{}/train'.format(datadir),
+        labels='inferred',
+        label_mode='categorical',
+        class_names=None,
+        color_mode='rgb',
+        batch_size=batch_size,
+        image_size=(img_w, img_h),
+        shuffle=True,
+        seed=None,
+        validation_split=None,
+        subset=None,
+        interpolation='bilinear',
+        follow_links=False,
+        crop_to_aspect_ratio=False,
+        pad_to_aspect_ratio=False,
+        data_format=None,
+        verbose=True
+    )
+
+    test_it = tf.keras.preprocessing.image_dataset_from_directory(
+        '{}/test'.format(datadir),
+        labels='inferred',
+        label_mode='categorical',
+        class_names=None,
+        color_mode='rgb',
+        batch_size=batch_size,
+        image_size=(img_w, img_h),
+        shuffle=False,
+        seed=None,
+        validation_split=None,
+        subset=None,
+        interpolation='bilinear',
+        follow_links=False,
+        crop_to_aspect_ratio=False,
+        pad_to_aspect_ratio=False,
+        data_format=None,
+        verbose=True
+    )
+
+    for image_batch, labels_batch in train_it:
+        print(image_batch.shape)
+        print(labels_batch.shape)
+        break
+
+    num_classes = len(list(train_it.class_names))
 
     bestf1 = 0
     bestNetwork = "unknown"
@@ -421,7 +473,7 @@ if __name__ == "__main__":
     ]
  
     architectureNumber = 1
-    optimiser = "sgd"
+    optimiser = "sgd1"
     epochs = 30
 
     resultsList = []
@@ -471,7 +523,7 @@ if __name__ == "__main__":
         valSteps = testSamples // batch_size
 
         # can miss out the early termination
-        early = EarlyStopping(monitor='val_categorical_accuracy', min_delta=0.01, patience=5, verbose=1, mode='auto')
+        early = EarlyStopping(monitor='val_categorical_accuracy', min_delta=0.01, patience=5, verbose=1, mode='max')
 
         print("Fitting the model: {}".format(modelName))
         model.fit(
