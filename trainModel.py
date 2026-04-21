@@ -471,10 +471,14 @@ if __name__ == "__main__":
     listOfTests = [  
                     [1, 20, "sgd" ],
     ]
+    listOfTests = [ [1, 20, "adam1" ],
+                    [1, 20, "adam2" ],
+                    [1, 20, "sgd" ]
+    ]
  
     architectureNumber = 1
-    optimiser = "sgd1"
-    epochs = 30
+    optimiser = "sgd"
+    epochs = 20
 
     resultsList = []
     for test in listOfTests:
@@ -535,24 +539,30 @@ if __name__ == "__main__":
             callbacks=[early]
             )
 
-        probabilities = model.predict_generator(generator=test_it)
+        probabilities = model.predict(test_it)
         #print(probabilities)
-        y_pred = np.argmax(probabilities, axis=-1)
-        #print(y_pred)
-        y_true = test_it.classes
-        #print(y_true)
+        y_pred = np.argmax(probabilities, axis=1)
+        print("y_pred is:")
+        print(y_pred)
+        #y_true = test_it.class_names
+        y_true = np.concatenate([y for x, y in test_it], axis=0)
+        if len(y_true.shape) > 1:
+            y_true = np.argmax(y_true, axis=1)
+        print("y_true is:")
+        print(y_true)
 
-        cm = confusion_matrix(y_true, y_pred, labels=list(test_it.class_indices.values()))
-        c.pictureConfusionMatrix(cm, list(test_it.class_indices.keys()))
+        cm = confusion_matrix(y_true, y_pred)
+        print(cm)
+        c.pictureConfusionMatrix(cm, list(test_it.class_names))
         print("The stats for {} after {} epochs with {} opt:".format(modelName, epochs, optimiser_name))
         f1 = f1_score(y_true, y_pred, average='micro')
         f1_all = f1_score(y_true, y_pred, average=None)
         mcc = matthews_corrcoef(y_true, y_pred)
         acc = accuracy_score(y_true, y_pred, normalize=True)
-        print("Here is the confusion matrix with labels {}".format(list(test_it.class_indices.keys())))
+        print("Here is the confusion matrix with labels {}".format(list(test_it.class_names)))
         print(cm)
         print("Here is the classification report")
-        print(classification_report(y_true, y_pred, labels=list(test_it.class_indices.values()), target_names=list(test_it.class_indices.keys())))
+        print(classification_report(y_true, y_pred, labels=list(test_it.class_names)))
         print("End of classification report")
         print("f1 micro = {} and all {} ".format(f1, f1_all))
         print("accuracy = {}".format(acc))
@@ -593,7 +603,7 @@ if __name__ == "__main__":
 
             # save model to file
             if saveModel:
-                modelBaseFilename = "arch{}_epochs{}_opt{}".format(architectureNumber, epochs, optimiser_name)
+                modelBaseFilename = "arch{}_epochs{}_opt{}.keras".format(architectureNumber, epochs, optimiser_name)
                 print("Saving to {}".format(modelBaseFilename))
                 model.save(modelBaseFilename)
                 #model_json = model.to_json()
