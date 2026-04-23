@@ -580,7 +580,7 @@ if __name__ == "__main__":
         print(theseResults)
         #tryit = tabulate(theseResults, headers=["datadir", "augmentation", "Model", "epochs", "opt", "cm00", "cm01", "cm10", "cm11", "f1"])
         with open('output.txt', 'a') as f:
-            print(tabulate(theseResults, headers=["datadir", "augmentation", "Model", "epochs", "opt", "cm00", "cm01", "cm10", "cm11", "f1"]), file=f)
+            print(tabulate(theseResults, headers=["datadir", "Model", "epochs", "opt", "cm00", "cm01", "cm10", "cm11", "f1"]), file=f)
             print("\n", file=f)
         with open('output_alt.txt', 'a') as f:
             print(theseResults)
