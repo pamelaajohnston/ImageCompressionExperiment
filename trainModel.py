@@ -471,12 +471,19 @@ if __name__ == "__main__":
     listOfTests = [  
                     [1, 20, "sgd" ],
     ]
-    listOfTests = [ [1, 20, "adam1" ],
-                    [1, 20, "adam1" ],
-                    [1, 20, "adam2" ],
-                    [1, 20, "adam2" ],
-                    [1, 20, "sgd" ],
-                    [1, 20, "sgd" ]
+    listOfTests = [ [9, 4, "sgd" ],
+                    [9, 4, "sgd1" ],
+                    [9, 4, "adam1" ],
+                    [9, 4, "adam2" ],
+                    [9, 4, "adam3" ],
+                    [9, 4, "rmsprop1" ],
+                    [1, 4, "sgd" ],
+                    [1, 4, "sgd1" ],
+                    [1, 4, "adam1" ],
+                    [1, 4, "adam2" ],
+                    [1, 4, "adam3" ],
+                    [1, 4, "rmsprop1" ],
+                    
     ]
  
     architectureNumber = 1
@@ -495,7 +502,7 @@ if __name__ == "__main__":
         if "sgd1" in optimiser:
             # Trying something with SGD.
             print("switching to optimer SGD1")
-            optimiser = optimizers.SGD(learning_rate=0.01)
+            optimiser = optimizers.SGD(learning_rate=0.0001)
         elif "adam1" in optimiser:
             # Trying something with adam.
             print("switching to optimer Adam1")

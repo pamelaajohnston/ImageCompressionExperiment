@@ -1,6 +1,10 @@
+#Based on https://docs.pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html
+
+#This for the data loaders from directories.
 # Source - https://stackoverflow.com/a/76975153
 # Posted by Ebrahim Pichka, modified by community. See post 'Timeline' for change history
 # Retrieved 2026-04-23, License - CC BY-SA 4.0
+
 
 import torch
 import torchvision
@@ -61,12 +65,37 @@ class Net_3x3_fc(nn.Module):
         self.fc2 = nn.Linear(64, 2)
 
     def forward(self, x):
-        x = F.relu(self.conv1(x))
-        x = F.relu(self.conv2(x))
-        x = F.relu(self.conv3(x))
+        x = F.leaky_relu(self.conv1(x))
+        x = F.leaky_relu(self.conv2(x))
+        x = F.leaky_relu(self.conv3(x))
+        x = torch.flatten(x, 1) # flatten all dimensions except batch
+        x = F.leaky_relu(self.fc1(x))
+        x = self.fc2(x)
+        return x
+    
+class Net_4x4_for_compression(nn.Module):
+    def __init__(self):
+        super().__init__()
+        # input 32x32x3
+        self.conv1 = nn.Conv2d(3, 32, 4) # in channels, out channels, kernel size 4, 32, 3
+        # now 29x29x32
+        self.pool = nn.MaxPool2d(2, 2)
+        # pooled to 14x14x32
+        self.conv2 = nn.Conv2d(32, 32, 4)
+        # now 11x11x32, pooled to 5x5x32 (flattening)
+        self.fc1 = nn.Linear(5*5*32, 384)
+        self.fc2 = nn.Linear(384, 192)
+        self.fc3 = nn.Linear(192, 64)
+        self.fc4 = nn.Linear(64, 2)
+
+    def forward(self, x):
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
         x = torch.flatten(x, 1) # flatten all dimensions except batch
         x = F.relu(self.fc1(x))
-        x = self.fc2(x)
+        x = F.relu(self.fc2(x))
+        x = F.relu(self.fc3(x))
+        x = self.fc4(x)
         return x
 
 
@@ -77,10 +106,12 @@ if __name__ == "__main__":
     img_h = 32
     doTheSaving = True
 
-    batch_size = 128
-    epochs = 2
+    batch_size = 32
+    epochs = 20
 
     datadir = "UCIDsinglecompression32x32patchesDataSet"
+    #datadir = "PetImages"
+
     traindir = '{}/train'.format(datadir)
     fileList = c.createFileList(traindir)
     trainSamples = len(fileList)
@@ -88,8 +119,13 @@ if __name__ == "__main__":
     fileList = c.createFileList(testdir)
     testSamples = len(fileList)
 
-    transform = transforms.Compose(
-    [transforms.ToTensor(),
+    IMAGE_WIDTH=32
+    IMAGE_HEIGHT=32
+    IMAGE_SIZE=(IMAGE_WIDTH, IMAGE_HEIGHT)
+
+    transform = transforms.Compose([
+        transforms.Resize(size=IMAGE_SIZE),
+        transforms.ToTensor(),
      #transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)) # No normalizing
      ])
 
@@ -101,9 +137,18 @@ if __name__ == "__main__":
     train_loader = DataLoader(train_dataset, batch_size=batch_size,
                                           shuffle=True, num_workers=2)
     test_loader = DataLoader(test_dataset, batch_size=batch_size,
-                                          shuffle=True, num_workers=2)
-    classes = ('comp1', 'uncompressed')
-    
+                                          shuffle=False, num_workers=2)
+    classes = train_dataset.classes
+    print("Class names: ",classes)
+
+    # Checking the data
+    img, label = train_dataset[0][0], train_dataset[0][1]
+    print(f"Image tensor:\n{img}")
+    print(f"Image shape: {img.shape}")
+    print(f"Image datatype: {img.dtype}")
+    print(f"Image label: {label}")
+    print(f"Label datatype: {type(label)}")
+        
 
 
     # get some random training images
@@ -115,11 +160,11 @@ if __name__ == "__main__":
 
 
     # The network
-    net = Net_3x3_fc()
+    net = Net()
 
     
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.0)
+    optimizer = optim.SGD(net.parameters(), lr=0.01, momentum=0.0)
 
     for epoch in range(epochs):  # loop over the dataset multiple times
 
@@ -127,7 +172,8 @@ if __name__ == "__main__":
         for i, data in enumerate(train_loader, 0):
             # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data
-
+            #print(inputs)
+            #print(labels)
             # zero the parameter gradients
             optimizer.zero_grad()
 
